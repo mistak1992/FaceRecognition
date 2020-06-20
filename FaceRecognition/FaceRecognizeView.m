@@ -1,20 +1,10 @@
-//
-//  FaceViewController.m
-//  FaceRecognition
-//
-//  Created by liyang on 17/2/29.
-//  Copyright © 2017年 kosienDGL. All rights reserved.
-//
-
-#import "FaceViewController.h"
-
-#import <AVFoundation/AVFoundation.h>
+#import "FaceRecognizeView.h"
 
 #import "UIImage+FaceRecognition.h"
 
 dispatch_semaphore_t semaphore;
 
-@interface FaceViewController ()<AVCaptureMetadataOutputObjectsDelegate, AVCaptureVideoDataOutputSampleBufferDelegate, UIAlertViewDelegate>
+@interface FaceRecognizeView ()<AVCaptureMetadataOutputObjectsDelegate, AVCaptureVideoDataOutputSampleBufferDelegate, UIAlertViewDelegate>
 // 硬件设备
 @property (nonatomic, strong) AVCaptureDevice *device;
 // 输入流
@@ -34,9 +24,11 @@ dispatch_semaphore_t semaphore;
 
 @property (nonatomic, assign) BOOL isGetFaceImage;
 
+@property (nonatomic, assign) FaceRecognizeConfiguration configure;
+
 @end
 
-@implementation FaceViewController
+@implementation FaceRecognizeView
 
 
 #pragma mark - 获取硬件设备
@@ -71,7 +63,7 @@ dispatch_semaphore_t semaphore;
 - (AVCaptureDeviceInput *)input
 {
     if (_input == nil) {
-        _input = [AVCaptureDeviceInput deviceInputWithDevice:self.device error:nil];
+        _input = [AVCaptureDeviceInput deviceInputWithDevice:[self cameraWithPosition:_configure.devicePosition] error:nil];
     }
     return _input;
 }
@@ -82,7 +74,7 @@ dispatch_semaphore_t semaphore;
     if (_metadataOutput == nil) {
         _metadataOutput = [[AVCaptureMetadataOutput alloc] init];
         [_metadataOutput setMetadataObjectsDelegate:self queue:dispatch_get_main_queue()];
-        _metadataOutput.rectOfInterest = self.view.bounds;  //设置扫描区域
+        _metadataOutput.rectOfInterest = CGRectMake(0, 0, 1, 1);//self.bounds;  //设置扫描区域
     }
     return _metadataOutput;
 }
@@ -109,20 +101,12 @@ dispatch_semaphore_t semaphore;
         if ([_session canAddOutput:self.metadataOutput]) {
             [_session addOutput:self.metadataOutput];
             //设置扫描类型
-            if ([self.metadataType isEqualToString:@"1"]) {
-                //人脸识别
-                self.metadataOutput.metadataObjectTypes = @[AVMetadataObjectTypeFace];
-            } else if ([self.metadataType isEqualToString:@"2"]) {
-                //二维码识别
-                self.metadataOutput.metadataObjectTypes = @[AVMetadataObjectTypeQRCode,
-                                                            AVMetadataObjectTypeEAN13Code,
-                                                            AVMetadataObjectTypeEAN8Code,
-                                                            AVMetadataObjectTypeCode128Code];
-            }
+            self.metadataOutput.metadataObjectTypes = @[AVMetadataObjectTypeFace];
         }
         if ([_session canAddOutput:self.videoDataOutput]) {
             [_session addOutput:self.videoDataOutput];
         }
+        _session.sessionPreset = AVCaptureSessionPresetHigh;
     }
     return _session;
 }
@@ -132,7 +116,65 @@ dispatch_semaphore_t semaphore;
 {
     if (_previewLayer == nil) {
         _previewLayer = [[AVCaptureVideoPreviewLayer alloc] initWithSession:self.session];
-        _previewLayer.frame = self.view.layer.bounds;
+        _previewLayer.videoGravity = AVLayerVideoGravityResizeAspect;
+        CGRect previewLayerFrame = CGRectZero;
+        switch (_configure.scaleType) {
+            case FaceRecognizeViewScaleTypeNone:
+            case FaceRecognizeViewScaleTypeScreenWidth:
+                [self updateOffset];
+                previewLayerFrame = CGRectMake(- _configure.previewFrame.origin.x + _configure.offsetX, - _configure.previewFrame.origin.y + _configure.offsetY, [UIScreen mainScreen].bounds.size.width, [UIScreen mainScreen].bounds.size.height);
+                break;
+            case FaceRecognizeViewScaleTypePreviewWidth:{
+                CMVideoDimensions dimensions = CMVideoFormatDescriptionGetDimensions(self.input.device.activeFormat.formatDescription);
+                CGFloat ratio = 0;
+                // base on orientation
+                UIInterfaceOrientation status = [UIApplication sharedApplication].statusBarOrientation;
+                if (status == UIInterfaceOrientationPortrait || status == UIInterfaceOrientationPortraitUpsideDown) {
+                    ratio = dimensions.height / (CGFloat)dimensions.width;
+                }else{
+                    ratio = dimensions.width / (CGFloat)dimensions.height;
+                }
+                // calculate
+                [self updateOffset];
+                CGFloat x = - _configure.previewFrame.origin.x + _configure.offsetX + _configure.previewFrame.origin.x;
+                CGFloat y = - _configure.previewFrame.origin.y + _configure.offsetY + ([UIScreen mainScreen].bounds.size.height - (_configure.previewFrame.size.width / ratio)) / 2;
+                CGFloat width = _configure.previewFrame.size.width;
+                CGFloat height = _configure.previewFrame.size.width / ratio;
+                previewLayerFrame = CGRectMake(x, y, width, height);
+                break;
+            }
+            case FaceRecognizeViewScaleTypeCustom:{
+                CMVideoDimensions dimensions = CMVideoFormatDescriptionGetDimensions(self.input.device.activeFormat.formatDescription);
+                CGFloat ratio = 0;
+                // base on orientation
+                UIInterfaceOrientation status = [UIApplication sharedApplication].statusBarOrientation;
+                if (status == UIInterfaceOrientationPortrait || status == UIInterfaceOrientationPortraitUpsideDown) {
+                    ratio = dimensions.height / (CGFloat)dimensions.width;
+                }else{
+                    ratio = dimensions.width / (CGFloat)dimensions.height;
+                }
+                // calculate
+                [self updateOffset];
+                CGFloat x = - _configure.previewFrame.origin.x + _configure.offsetX + ([UIScreen mainScreen].bounds.size.width - (_configure.previewFrame.size.width * _configure.scale)) / 2;
+                CGFloat y = - _configure.previewFrame.origin.y + _configure.offsetY + ([UIScreen mainScreen].bounds.size.height - ((_configure.previewFrame.size.width * _configure.scale) / ratio)) / 2;
+                CGFloat width = _configure.previewFrame.size.width * _configure.scale;
+                CGFloat height = ((_configure.previewFrame.size.width * _configure.scale)/ ratio);
+                previewLayerFrame = CGRectMake(x, y, width, height);
+                break;
+            }
+            default:
+                break;
+        }
+        // metaDataOutput
+        CGFloat x = - previewLayerFrame.origin.y / (CGFloat)(previewLayerFrame.size.height);
+        CGFloat y = ((previewLayerFrame.size.width - _configure.previewFrame.size.width) / 2) / previewLayerFrame.size.width;
+        CGFloat width = _configure.previewFrame.size.height / (CGFloat)previewLayerFrame.size.height;
+        CGFloat height =_configure.previewFrame.size.width / (CGFloat)previewLayerFrame.size.width;
+        self.metadataOutput.rectOfInterest = CGRectMake(x, y, width, height);
+        NSLog(@"%@", NSStringFromCGRect(previewLayerFrame));
+        NSLog(@"%@", NSStringFromCGRect(self.metadataOutput.rectOfInterest));
+        _previewLayer.frame = previewLayerFrame;
+        
     }
     return _previewLayer;
 }
@@ -144,32 +186,27 @@ dispatch_semaphore_t semaphore;
 
 - (void)stop{
     [self.session stopRunning];
-    self.session = nil;
-//    [self.previewLayer removeFromSuperlayer];
+//    self.session = nil;
 }
 
-- (void)viewWillAppear:(BOOL)animated {
-    [super viewWillAppear:animated];
-    [self start];
+- (instancetype)initWithFrame:(CGRect)frame configuration:(FaceRecognizeConfiguration)configure{
+    if (self = [super initWithFrame:frame]) {
+        self.configure = configure;
+        [self setupUI];
+    }
+    return self;
 }
 
-- (void)viewWillDisappear:(BOOL)animated {
-    [self stop];
-    [super viewWillDisappear:YES];
-}
-
-- (void)viewDidLoad {
-    [super viewDidLoad];
+- (void)setupUI{
     // 信号量
     semaphore = dispatch_semaphore_create(1);
     
-    self.view.backgroundColor = [UIColor whiteColor];
     //把previewLayer添加到self.view.layer上
-    [self.view.layer addSublayer:self.previewLayer];
+    [self.layer addSublayer:self.previewLayer];
     
-    //设置导航栏右边按钮
-    UIBarButtonItem *rightBarButtonItem = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemCamera target:self action:@selector(switchCamera)];
-    self.navigationItem.rightBarButtonItem = rightBarButtonItem;
+    self.clipsToBounds = YES;
+//    self.layer.borderColor = [UIColor redColor].CGColor;
+//    self.layer.borderWidth = 2;
 }
 
 #pragma mark - 切换前后置摄像头
@@ -215,21 +252,11 @@ dispatch_semaphore_t semaphore;
         _faceRectView.layer.cornerRadius = 5;
         _faceRectView.layer.borderColor = [UIColor orangeColor].CGColor;
         _faceRectView.layer.borderWidth = 2;
-        [self.view addSubview:_faceRectView];
+        [self addSubview:_faceRectView];
         _faceRectView.hidden = YES;
     }
     return _faceRectView;
 }
-
-- (UIImageView *)imageV{
-    if (_imageV == nil) {
-        _imageV = [[UIImageView alloc] initWithFrame:CGRectMake(0, 88, 120, 120)];
-        _imageV.contentMode = UIViewContentModeScaleAspectFit;
-        [self.view addSubview:_imageV];
-    }
-    return _imageV;
-}
-
 
 #pragma mark - AVCaptureMetadataOutputObjectsDelegate
 - (void)captureOutput:(AVCaptureOutput *)captureOutput didOutputMetadataObjects:(NSArray *)metadataObjects fromConnection:(AVCaptureConnection *)connection{
@@ -241,21 +268,17 @@ dispatch_semaphore_t semaphore;
     // 判断metaData
     if (metadataObjects.count > 0) {
         AVMetadataMachineReadableCodeObject *metadataObject = [metadataObjects objectAtIndex:0];
-        if ([self.metadataType isEqualToString:@"1"]) {
-            //人脸识别结果
-            AVMetadataObject *faceData = [self.previewLayer transformedMetadataObjectForMetadataObject:metadataObject];
-            NSLog(@"faceData == %@", faceData);
-            self.faceRectView.frame = faceData.bounds;
-            self.faceRectView.hidden = NO;
-            // 用于获取人脸图片信号量
-            dispatch_semaphore_wait(semaphore, DISPATCH_TIME_FOREVER);
-            self.isGetFaceImage = YES;
-            dispatch_semaphore_signal(semaphore);
-        }else if ([self.metadataType isEqualToString:@"2"]) {
-            //二维码识别结果
-            [self.session stopRunning];
-            NSLog(@"QRCode is : %@", metadataObject.stringValue);
+        //人脸识别结果
+        AVMetadataObject *faceData = [self.previewLayer transformedMetadataObjectForMetadataObject:metadataObject];
+        NSLog(@"faceData == %@", faceData);
+        [self setFaceRectViewWithFaceData:faceData.bounds];
+        self.faceRectView.hidden = NO;
+        // 用于获取人脸图片信号量
+        dispatch_semaphore_wait(semaphore, DISPATCH_TIME_FOREVER);
+        if ([self.delegate respondsToSelector:@selector(faceRecognizeView:canGetFaceImageFromFaceDetectRect:)] == YES) {
+            self.isGetFaceImage = [self.delegate faceRecognizeView:self canGetFaceImageFromFaceDetectRect:faceData.bounds];
         }
+        dispatch_semaphore_signal(semaphore);
     } else {
         //
         self.faceRectView.hidden = YES;
@@ -270,11 +293,9 @@ dispatch_semaphore_t semaphore;
         UIImage* sampleImage = [UIImage faceRecognition_imageFromSampleBuffer:sampleBuffer];
         NSLog(@"调用了%@", sampleImage);
         dispatch_async(dispatch_get_main_queue(), ^{
-            self.imageV.backgroundColor = [UIColor redColor];
-            self.imageV.image = sampleImage;
             // callback
-            if ([self.delegate respondsToSelector:@selector(faceViewController:didGetFaceImage:)] == YES) {
-                [self.delegate faceViewController:self didGetFaceImage:sampleImage];
+            if ([self.delegate respondsToSelector:@selector(faceRecognizeView:didGetFaceImage:)] == YES) {
+                [self.delegate faceRecognizeView:self didGetFaceImage:sampleImage];
             }
         });
         // 下一张
@@ -307,10 +328,18 @@ dispatch_semaphore_t semaphore;
     return NO;
 }
 
-
-
-- (void)didReceiveMemoryWarning {
-    [super didReceiveMemoryWarning];
-    // Dispose of any resources that can be recreated.
+- (void)setFaceRectViewWithFaceData:(CGRect)bounds{
+    CGFloat x = bounds.origin.x - (self.previewLayer.frame.size.width - _configure.previewFrame.size.width) / 2;
+    CGFloat y = bounds.origin.y - (self.previewLayer.frame.size.height - _configure.previewFrame.size.height) / 2;
+    self.faceRectView.frame = CGRectMake(x, y, bounds.size.width, bounds.size.height);
 }
+
+- (void)updateOffset{
+    CGFloat centerX = _configure.previewFrame.origin.x + _configure.previewFrame.size.width / 2;
+    CGFloat centerY = _configure.previewFrame.origin.y + _configure.previewFrame.size.height / 2;
+    _configure.offsetX = centerX - [UIScreen mainScreen].bounds.size.width / 2;
+    _configure.offsetY = centerY - [UIScreen mainScreen].bounds.size.height / 2;
+    NSLog(@"%lf %lf", _configure.offsetX, _configure.offsetY);
+}
+
 @end

@@ -7,7 +7,7 @@
 //
 
 #import "ViewController.h"
-#import "FaceViewController.h"
+#import "DemoViewController.h"
 
 @interface ViewController ()
 
@@ -37,17 +37,17 @@
 //人脸识别
 - (void)click1
 {
-    FaceViewController *VC = [[FaceViewController alloc] init];
-    VC.metadataType = @"1";
+    DemoViewController *VC = [[DemoViewController alloc] init];
+//    VC.metadataType = @"1";
     [self.navigationController pushViewController:VC animated:YES];
 }
 
 //二维码识别
 - (void)click2
 {
-    FaceViewController *VC = [[FaceViewController alloc] init];
-    VC.metadataType = @"2";
-    [self.navigationController pushViewController:VC animated:YES];
+//    FaceViewController *VC = [[FaceViewController alloc] init];
+//    VC.metadataType = @"2";
+//    [self.navigationController pushViewController:VC animated:YES];
 }
 
 
