@@ -14,10 +14,10 @@ typedef NS_ENUM(NSUInteger, FaceRecognizeViewScaleType) {
 typedef struct FaceRecognizeConfigurationStruct {
     CGRect previewFrame; // relate to mainScreen
     AVCaptureDevicePosition devicePosition;
-    CGFloat offsetX; // capture screen center relate to preview center, horizontal
-    CGFloat offsetY; // capture screen center relate to preview center, vertical
     FaceRecognizeViewScaleType scaleType;
     CGFloat scale; // only work for FaceRecognizeViewScaleTypeCustom, relate to preview width
+    AVCaptureSessionPreset sessionPreset; // default is AVCaptureSessionPresetHigh
+    AVLayerVideoGravity videoGravity; // default is AVLayerVideoGravityResizeAspect
 } FaceRecognizeConfiguration;
 
 @protocol FaceRecognizeViewDelegate <NSObject>

@@ -21,7 +21,7 @@
     // Do any additional setup after loading the view.
     self.view.backgroundColor = [UIColor whiteColor];
 
-    CGRect previewRect = CGRectMake([UIScreen mainScreen].bounds.size.width / 2 - 100, [UIScreen mainScreen].bounds.size.height / 2 - 200, 200, 200);
+    CGRect previewRect = CGRectMake([UIScreen mainScreen].bounds.size.width / 2 - 150, [UIScreen mainScreen].bounds.size.height / 2 - 200, 200, 200);
     
     FaceRecognizeConfiguration conf;
     conf.devicePosition = AVCaptureDevicePositionFront;

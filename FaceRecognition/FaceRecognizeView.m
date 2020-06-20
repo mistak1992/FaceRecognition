@@ -106,7 +106,7 @@ dispatch_semaphore_t semaphore;
         if ([_session canAddOutput:self.videoDataOutput]) {
             [_session addOutput:self.videoDataOutput];
         }
-        _session.sessionPreset = AVCaptureSessionPresetHigh;
+        _session.sessionPreset = _configure.sessionPreset;
     }
     return _session;
 }
@@ -116,14 +116,15 @@ dispatch_semaphore_t semaphore;
 {
     if (_previewLayer == nil) {
         _previewLayer = [[AVCaptureVideoPreviewLayer alloc] initWithSession:self.session];
-        _previewLayer.videoGravity = AVLayerVideoGravityResizeAspect;
+        _previewLayer.videoGravity = _configure.videoGravity;
         CGRect previewLayerFrame = CGRectZero;
         switch (_configure.scaleType) {
             case FaceRecognizeViewScaleTypeNone:
-            case FaceRecognizeViewScaleTypeScreenWidth:
-                [self updateOffset];
-                previewLayerFrame = CGRectMake(- _configure.previewFrame.origin.x + _configure.offsetX, - _configure.previewFrame.origin.y + _configure.offsetY, [UIScreen mainScreen].bounds.size.width, [UIScreen mainScreen].bounds.size.height);
+            case FaceRecognizeViewScaleTypeScreenWidth:{
+                CGPoint offset = [self calculateOffset];
+                previewLayerFrame = CGRectMake(- _configure.previewFrame.origin.x + offset.x, - _configure.previewFrame.origin.y + offset.y, [UIScreen mainScreen].bounds.size.width, [UIScreen mainScreen].bounds.size.height);
                 break;
+            }
             case FaceRecognizeViewScaleTypePreviewWidth:{
                 CMVideoDimensions dimensions = CMVideoFormatDescriptionGetDimensions(self.input.device.activeFormat.formatDescription);
                 CGFloat ratio = 0;
@@ -135,9 +136,9 @@ dispatch_semaphore_t semaphore;
                     ratio = dimensions.width / (CGFloat)dimensions.height;
                 }
                 // calculate
-                [self updateOffset];
-                CGFloat x = - _configure.previewFrame.origin.x + _configure.offsetX + _configure.previewFrame.origin.x;
-                CGFloat y = - _configure.previewFrame.origin.y + _configure.offsetY + ([UIScreen mainScreen].bounds.size.height - (_configure.previewFrame.size.width / ratio)) / 2;
+                CGPoint offset = [self calculateOffset];
+                CGFloat x = - _configure.previewFrame.origin.x + offset.x + _configure.previewFrame.origin.x;
+                CGFloat y = - _configure.previewFrame.origin.y + offset.y + ([UIScreen mainScreen].bounds.size.height - (_configure.previewFrame.size.width / ratio)) / 2;
                 CGFloat width = _configure.previewFrame.size.width;
                 CGFloat height = _configure.previewFrame.size.width / ratio;
                 previewLayerFrame = CGRectMake(x, y, width, height);
@@ -154,9 +155,9 @@ dispatch_semaphore_t semaphore;
                     ratio = dimensions.width / (CGFloat)dimensions.height;
                 }
                 // calculate
-                [self updateOffset];
-                CGFloat x = - _configure.previewFrame.origin.x + _configure.offsetX + ([UIScreen mainScreen].bounds.size.width - (_configure.previewFrame.size.width * _configure.scale)) / 2;
-                CGFloat y = - _configure.previewFrame.origin.y + _configure.offsetY + ([UIScreen mainScreen].bounds.size.height - ((_configure.previewFrame.size.width * _configure.scale) / ratio)) / 2;
+                CGPoint offset = [self calculateOffset];
+                CGFloat x = - _configure.previewFrame.origin.x + offset.x + ([UIScreen mainScreen].bounds.size.width - (_configure.previewFrame.size.width * _configure.scale)) / 2;
+                CGFloat y = - _configure.previewFrame.origin.y + offset.y + ([UIScreen mainScreen].bounds.size.height - ((_configure.previewFrame.size.width * _configure.scale) / ratio)) / 2;
                 CGFloat width = _configure.previewFrame.size.width * _configure.scale;
                 CGFloat height = ((_configure.previewFrame.size.width * _configure.scale)/ ratio);
                 previewLayerFrame = CGRectMake(x, y, width, height);
@@ -192,21 +193,28 @@ dispatch_semaphore_t semaphore;
 - (instancetype)initWithFrame:(CGRect)frame configuration:(FaceRecognizeConfiguration)configure{
     if (self = [super initWithFrame:frame]) {
         self.configure = configure;
-        [self setupUI];
+        [self setup];
     }
     return self;
 }
 
-- (void)setupUI{
-    // 信号量
+- (void)setup{
+    // set default conf
+    if (_configure.sessionPreset == nil) {
+        _configure.sessionPreset = AVCaptureSessionPresetHigh;
+    }
+    if (_configure.videoGravity == nil) {
+        _configure.videoGravity = AVLayerVideoGravityResize;
+    }
+    
+    // semaphore
     semaphore = dispatch_semaphore_create(1);
     
     //把previewLayer添加到self.view.layer上
     [self.layer addSublayer:self.previewLayer];
-    
     self.clipsToBounds = YES;
-//    self.layer.borderColor = [UIColor redColor].CGColor;
-//    self.layer.borderWidth = 2;
+    
+    
 }
 
 #pragma mark - 切换前后置摄像头
@@ -334,12 +342,10 @@ dispatch_semaphore_t semaphore;
     self.faceRectView.frame = CGRectMake(x, y, bounds.size.width, bounds.size.height);
 }
 
-- (void)updateOffset{
+- (CGPoint)calculateOffset{
     CGFloat centerX = _configure.previewFrame.origin.x + _configure.previewFrame.size.width / 2;
     CGFloat centerY = _configure.previewFrame.origin.y + _configure.previewFrame.size.height / 2;
-    _configure.offsetX = centerX - [UIScreen mainScreen].bounds.size.width / 2;
-    _configure.offsetY = centerY - [UIScreen mainScreen].bounds.size.height / 2;
-    NSLog(@"%lf %lf", _configure.offsetX, _configure.offsetY);
+    return CGPointMake(centerX - [UIScreen mainScreen].bounds.size.width / 2, centerY - [UIScreen mainScreen].bounds.size.height / 2);
 }
 
 @end

@@ -14,7 +14,6 @@
 		C631418E1F04914A00636B89 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = C631418D1F04914A00636B89 /* Assets.xcassets */; };
 		C63141911F04914A00636B89 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = C631418F1F04914A00636B89 /* LaunchScreen.storyboard */; };
 		C63141B61F04953A00636B89 /* FaceRecognizeView.m in Sources */ = {isa = PBXBuildFile; fileRef = C63141B51F04953A00636B89 /* FaceRecognizeView.m */; };
-		C63141BD1F04DB0B00636B89 /* face@2x.jpg in Resources */ = {isa = PBXBuildFile; fileRef = C63141BC1F04DB0B00636B89 /* face@2x.jpg */; };
 		CC5EE26F249B6A3D00834475 /* UIImage+FaceRecognition.m in Sources */ = {isa = PBXBuildFile; fileRef = CC5EE26E249B6A3D00834475 /* UIImage+FaceRecognition.m */; };
 		CC5EE274249C5BFE00834475 /* DemoViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = CC5EE273249C5BFE00834475 /* DemoViewController.m */; };
 /* End PBXBuildFile section */
@@ -32,7 +31,6 @@
 		C63141921F04914A00636B89 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		C63141B41F04953A00636B89 /* FaceRecognizeView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = FaceRecognizeView.h; sourceTree = "<group>"; };
 		C63141B51F04953A00636B89 /* FaceRecognizeView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = FaceRecognizeView.m; sourceTree = "<group>"; };
-		C63141BC1F04DB0B00636B89 /* face@2x.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = "face@2x.jpg"; sourceTree = "<group>"; };
 		CC5EE26D249B6A3D00834475 /* UIImage+FaceRecognition.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "UIImage+FaceRecognition.h"; sourceTree = "<group>"; };
 		CC5EE26E249B6A3D00834475 /* UIImage+FaceRecognition.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = "UIImage+FaceRecognition.m"; sourceTree = "<group>"; };
 		CC5EE272249C5BFE00834475 /* DemoViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = DemoViewController.h; sourceTree = "<group>"; };
@@ -84,7 +82,6 @@
 		C63141811F04914A00636B89 /* Supporting Files */ = {
 			isa = PBXGroup;
 			children = (
-				C63141BC1F04DB0B00636B89 /* face@2x.jpg */,
 				C631418A1F04914A00636B89 /* Main.storyboard */,
 				C631418D1F04914A00636B89 /* Assets.xcassets */,
 				C631418F1F04914A00636B89 /* LaunchScreen.storyboard */,
@@ -176,7 +173,6 @@
 				C63141911F04914A00636B89 /* LaunchScreen.storyboard in Resources */,
 				C631418E1F04914A00636B89 /* Assets.xcassets in Resources */,
 				C631418C1F04914A00636B89 /* Main.storyboard in Resources */,
-				C63141BD1F04DB0B00636B89 /* face@2x.jpg in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
