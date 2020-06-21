@@ -204,7 +204,7 @@ dispatch_semaphore_t semaphore;
         _configure.sessionPreset = AVCaptureSessionPresetHigh;
     }
     if (_configure.videoGravity == nil) {
-        _configure.videoGravity = AVLayerVideoGravityResize;
+        _configure.videoGravity = AVLayerVideoGravityResizeAspect;
     }
     
     // semaphore
@@ -212,7 +212,7 @@ dispatch_semaphore_t semaphore;
     
     //把previewLayer添加到self.view.layer上
     [self.layer addSublayer:self.previewLayer];
-    self.clipsToBounds = YES;
+//    self.clipsToBounds = YES;
     
     
 }
@@ -337,11 +337,14 @@ dispatch_semaphore_t semaphore;
 }
 
 - (void)setFaceRectViewWithFaceData:(CGRect)bounds{
-    CGFloat x = bounds.origin.x - (self.previewLayer.frame.size.width - _configure.previewFrame.size.width) / 2;
+    CGPoint offset = [self calculateOffset];
+    CGFloat x = bounds.origin.x - (self.previewLayer.frame.size.width - _configure.previewFrame.size.width) / 2 + offset.x;
     CGFloat y = bounds.origin.y - (self.previewLayer.frame.size.height - _configure.previewFrame.size.height) / 2;
     self.faceRectView.frame = CGRectMake(x, y, bounds.size.width, bounds.size.height);
+    NSLog(@"%@", NSStringFromCGRect(self.faceRectView.frame));
 }
 
+#pragma mark - calculate preview center offset relate to screen
 - (CGPoint)calculateOffset{
     CGFloat centerX = _configure.previewFrame.origin.x + _configure.previewFrame.size.width / 2;
     CGFloat centerY = _configure.previewFrame.origin.y + _configure.previewFrame.size.height / 2;
