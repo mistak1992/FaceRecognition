@@ -26,9 +26,9 @@
     FaceRecognizeConfiguration conf;
     conf.devicePosition = AVCaptureDevicePositionFront;
     conf.previewFrame = previewRect;
-    conf.scaleType = FaceRecognizeViewScaleTypePreviewWidth;
+    conf.scaleType = FaceRecognizeViewScaleTypeCustom;
 //    conf.offsetY = -100;
-//    conf.scale = 1.5;
+    conf.scale = 1.5;
     FaceRecognizeView *captureV = [[FaceRecognizeView alloc] initWithFrame:previewRect configuration:conf];
     captureV.delegate = self;
     [self.view addSubview:captureV];

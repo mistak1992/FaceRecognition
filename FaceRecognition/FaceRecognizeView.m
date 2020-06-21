@@ -121,8 +121,9 @@ dispatch_semaphore_t semaphore;
         switch (_configure.scaleType) {
             case FaceRecognizeViewScaleTypeNone:
             case FaceRecognizeViewScaleTypeScreenWidth:{
-                CGPoint offset = [self calculateOffset];
-                previewLayerFrame = CGRectMake(- _configure.previewFrame.origin.x + offset.x, - _configure.previewFrame.origin.y + offset.y, [UIScreen mainScreen].bounds.size.width, [UIScreen mainScreen].bounds.size.height);
+                CGFloat x = - ([UIScreen mainScreen].bounds.size.width - _configure.previewFrame.size.width) / 2;
+                CGFloat y = - ([UIScreen mainScreen].bounds.size.height - _configure.previewFrame.size.height) / 2;
+                previewLayerFrame = CGRectMake(x, y, [UIScreen mainScreen].bounds.size.width, [UIScreen mainScreen].bounds.size.height);
                 break;
             }
             case FaceRecognizeViewScaleTypePreviewWidth:{
@@ -136,9 +137,8 @@ dispatch_semaphore_t semaphore;
                     ratio = dimensions.width / (CGFloat)dimensions.height;
                 }
                 // calculate
-                CGPoint offset = [self calculateOffset];
-                CGFloat x = - _configure.previewFrame.origin.x + offset.x + _configure.previewFrame.origin.x;
-                CGFloat y = - _configure.previewFrame.origin.y + offset.y + ([UIScreen mainScreen].bounds.size.height - (_configure.previewFrame.size.width / ratio)) / 2;
+                CGFloat x = 0;
+                CGFloat y = - (_configure.previewFrame.size.width / ratio - _configure.previewFrame.size.height) / 2;
                 CGFloat width = _configure.previewFrame.size.width;
                 CGFloat height = _configure.previewFrame.size.width / ratio;
                 previewLayerFrame = CGRectMake(x, y, width, height);
@@ -155,9 +155,8 @@ dispatch_semaphore_t semaphore;
                     ratio = dimensions.width / (CGFloat)dimensions.height;
                 }
                 // calculate
-                CGPoint offset = [self calculateOffset];
-                CGFloat x = - _configure.previewFrame.origin.x + offset.x + ([UIScreen mainScreen].bounds.size.width - (_configure.previewFrame.size.width * _configure.scale)) / 2;
-                CGFloat y = - _configure.previewFrame.origin.y + offset.y + ([UIScreen mainScreen].bounds.size.height - ((_configure.previewFrame.size.width * _configure.scale) / ratio)) / 2;
+                CGFloat x = (_configure.previewFrame.size.width - (_configure.previewFrame.size.width * _configure.scale)) / 2;
+                CGFloat y = (_configure.previewFrame.size.height - ((_configure.previewFrame.size.width * _configure.scale) / ratio)) / 2;
                 CGFloat width = _configure.previewFrame.size.width * _configure.scale;
                 CGFloat height = ((_configure.previewFrame.size.width * _configure.scale)/ ratio);
                 previewLayerFrame = CGRectMake(x, y, width, height);
@@ -212,8 +211,10 @@ dispatch_semaphore_t semaphore;
     
     //把previewLayer添加到self.view.layer上
     [self.layer addSublayer:self.previewLayer];
-//    self.clipsToBounds = YES;
+    self.clipsToBounds = YES;
     
+    self.layer.borderColor = [UIColor redColor].CGColor;
+    self.layer.borderWidth = 1;
     
 }
 
@@ -337,8 +338,7 @@ dispatch_semaphore_t semaphore;
 }
 
 - (void)setFaceRectViewWithFaceData:(CGRect)bounds{
-    CGPoint offset = [self calculateOffset];
-    CGFloat x = bounds.origin.x - (self.previewLayer.frame.size.width - _configure.previewFrame.size.width) / 2 + offset.x;
+    CGFloat x = bounds.origin.x - (self.previewLayer.frame.size.width - _configure.previewFrame.size.width) / 2;
     CGFloat y = bounds.origin.y - (self.previewLayer.frame.size.height - _configure.previewFrame.size.height) / 2;
     self.faceRectView.frame = CGRectMake(x, y, bounds.size.width, bounds.size.height);
     NSLog(@"%@", NSStringFromCGRect(self.faceRectView.frame));
