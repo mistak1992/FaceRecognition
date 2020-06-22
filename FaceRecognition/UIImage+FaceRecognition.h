@@ -1,11 +1,3 @@
-//
-//  UIImage+FaceRecognition.h
-//  FaceRecognition
-//
-//  Created by mist on 2020/6/18.
-//  Copyright © 2020 kosienDGL. All rights reserved.
-//
-
 #import <UIKit/UIKit.h>
 
 #import <AVFoundation/AVFoundation.h>

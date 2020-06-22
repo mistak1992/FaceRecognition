@@ -10,7 +10,7 @@ dispatch_semaphore_t semaphore;
 // 输入流
 @property (nonatomic, strong) AVCaptureDeviceInput *input;
 // meta输出流
-@property (nonatomic, strong) AVCaptureMetadataOutput *metadataOutput;      //用于二维码识别以及人脸识别
+@property (nonatomic, strong) AVCaptureMetadataOutput *metadataOutput;
 // video输出流
 @property (nonatomic, strong) AVCaptureVideoDataOutput *videoDataOutput;
 // 会话
@@ -211,10 +211,13 @@ dispatch_semaphore_t semaphore;
     
     //把previewLayer添加到self.view.layer上
     [self.layer addSublayer:self.previewLayer];
-    self.clipsToBounds = YES;
+    // clipsToBounds
+    self.clipsToBounds = !_configure.showOverflowPreview;
     
-    self.layer.borderColor = [UIColor redColor].CGColor;
-    self.layer.borderWidth = 1;
+    // debug
+    
+//    self.layer.borderColor = [UIColor redColor].CGColor;
+//    self.layer.borderWidth = 1;
     
 }
 
@@ -280,12 +283,13 @@ dispatch_semaphore_t semaphore;
         //人脸识别结果
         AVMetadataObject *faceData = [self.previewLayer transformedMetadataObjectForMetadataObject:metadataObject];
         NSLog(@"faceData == %@", faceData);
-        [self setFaceRectViewWithFaceData:faceData.bounds];
+        CGRect rectInPreview = [self convertRectToPreview:faceData.bounds];
+        [self setFaceRectViewWithFaceData:rectInPreview];
         self.faceRectView.hidden = NO;
         // 用于获取人脸图片信号量
         dispatch_semaphore_wait(semaphore, DISPATCH_TIME_FOREVER);
         if ([self.delegate respondsToSelector:@selector(faceRecognizeView:canGetFaceImageFromFaceDetectRect:)] == YES) {
-            self.isGetFaceImage = [self.delegate faceRecognizeView:self canGetFaceImageFromFaceDetectRect:faceData.bounds];
+            self.isGetFaceImage = [self.delegate faceRecognizeView:self canGetFaceImageFromFaceDetectRect:rectInPreview];
         }
         dispatch_semaphore_signal(semaphore);
     } else {
@@ -317,30 +321,15 @@ dispatch_semaphore_t semaphore;
     
 }
 
--(BOOL)locationFilter:(AVMetadataObject*)faceData{
-    CGFloat imgViewX = _faceRectView.frame.origin.x;
-    CGFloat imgViewY = _faceRectView.frame.origin.y;
-    CGFloat imgViewWidth = _faceRectView.frame.size.width;
-    
-    CGFloat faceX = faceData.bounds.origin.x;
-    CGFloat faceY = faceData.bounds.origin.y;
-    CGFloat faceWidth = faceData.bounds.size.width;
-    if (imgViewY-50 < faceY && faceY < imgViewY + 90) {
-        if (imgViewX-50 < faceX && faceX < imgViewX+50) {
-            if (imgViewWidth-50 < faceWidth && faceWidth < imgViewWidth+50) {
-                return YES;
-                //self.faceImageView.frame = faceData.bounds;
-                //self.faceImageView.hidden = NO;
-            }
-        }
-    }
-    return NO;
+- (CGRect)convertRectToPreview:(CGRect)bounds{
+    CGFloat x = bounds.origin.x - (self.previewLayer.frame.size.width - _configure.previewFrame.size.width) / 2;
+    CGFloat y = bounds.origin.y - (self.previewLayer.frame.size.height - _configure.previewFrame.size.height) / 2;
+    CGRect rect = CGRectMake(x, y, bounds.size.width, bounds.size.height);
+    return rect;
 }
 
 - (void)setFaceRectViewWithFaceData:(CGRect)bounds{
-    CGFloat x = bounds.origin.x - (self.previewLayer.frame.size.width - _configure.previewFrame.size.width) / 2;
-    CGFloat y = bounds.origin.y - (self.previewLayer.frame.size.height - _configure.previewFrame.size.height) / 2;
-    self.faceRectView.frame = CGRectMake(x, y, bounds.size.width, bounds.size.height);
+    self.faceRectView.frame = bounds;
     NSLog(@"%@", NSStringFromCGRect(self.faceRectView.frame));
 }
 

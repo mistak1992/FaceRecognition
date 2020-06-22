@@ -18,6 +18,7 @@ typedef struct FaceRecognizeConfigurationStruct {
     CGFloat scale; // only work for FaceRecognizeViewScaleTypeCustom, relate to preview width
     AVCaptureSessionPreset sessionPreset; // default is AVCaptureSessionPresetHigh
     AVLayerVideoGravity videoGravity; // default is AVLayerVideoGravityResizeAspect
+    BOOL showOverflowPreview; // default is NO
 } FaceRecognizeConfiguration;
 
 @protocol FaceRecognizeViewDelegate <NSObject>

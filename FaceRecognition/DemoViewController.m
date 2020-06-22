@@ -1,11 +1,3 @@
-//
-//  DemoViewController.m
-//  FaceRecognition
-//
-//  Created by mist on 2020/6/19.
-//  Copyright © 2020 kosienDGL. All rights reserved.
-//
-
 #import "DemoViewController.h"
 
 #include "FaceRecognizeView.h"
@@ -26,16 +18,13 @@
     FaceRecognizeConfiguration conf;
     conf.devicePosition = AVCaptureDevicePositionFront;
     conf.previewFrame = previewRect;
-    conf.scaleType = FaceRecognizeViewScaleTypeCustom;
-//    conf.offsetY = -100;
+    conf.scaleType = FaceRecognizeViewScaleTypePreviewWidth;
     conf.scale = 1.5;
     FaceRecognizeView *captureV = [[FaceRecognizeView alloc] initWithFrame:previewRect configuration:conf];
+    captureV.layer.cornerRadius = 100;
     captureV.delegate = self;
     [self.view addSubview:captureV];
     [captureV start];
-    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(3 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-        
-    });
 }
 
 - (void)faceRecognizeView:(FaceRecognizeView *)faceRecognizeView didGetFaceImage:(UIImage *)image{
